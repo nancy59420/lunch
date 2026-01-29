@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>午餐大轉盤</title>
+    <style>
+        /* 奶茶色系配色 */
+        :root {
+            --bg-color: #f5ebe0;      /* 淺米色背景 */
+            --card-bg: #ffffff;
+            --primary-brown: #a98467; /* 焦糖棕 */
+            --accent-tan: #adc178;   /* 抹茶奶茶色(點綴) */
+            --text-main: #6c584c;     /* 深咖文字 */
+            --wheel-1: #e6ccb2;       /* 轉盤色1 */
+            --wheel-2: #ede0d4;       /* 轉盤色2 */
+        }
+
+        body { 
+            font-family: 'Microsoft JhengHei', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            padding: 2.5rem; 
+            border-radius: 30px; 
+            box-shadow: 0 15px 35px rgba(108, 88, 76, 0.1); 
+            text-align: center; 
+            width: 350px; 
+            position: relative;
+        }
+
+        h2 { margin-top: 0; letter-spacing: 2px; }
+
+        /* 轉盤容器 */
+        .wheel-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+
+        /* 指針 */
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--primary-brown);
+            z-index: 10;
+        }
+
+        #result { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: var(--primary-brown); 
+            margin: 20px 0; 
+            min-height: 1.5em;
+        }
+
+        button { 
+            background-color: var(--primary-brown); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            font-size: 1.1rem; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            width: 100%; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(169, 132, 103, 0.3);
+        }
+
+        button:hover { background-color: #7f5539; transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .list-hint { font-size: 0.8rem; color: #a98467; margin-top: 15px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🍴 午餐大轉盤</h2>
+    
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+
+    <div id="result">點擊下方開始轉動</div>
+    <button id="spinBtn" onclick="spinWheel()">旋轉吧，我的午餐！</button>
+    <p class="list-hint">今天要吃什麼午餐呢？</p>
+</div>
+
+<script>
+    const options = ["自助餐","源香拌麵","全家","三商巧福","川驕牛肉麵","日輕好食","向陽冬瓜飯","肯德基","Nu pasta","鵝肉系列","能量先生","炒飯","喫二碗","麥當勞","Subway","JSP","三商鮮五丼","食之悅","鴨肉榮","松屋","摩斯漢堡","艾隆","7-11","一涴川辛堂","來來麵食館","桃司廚","麵屋 亭","好螺唆","Mr.臭"];
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultDiv = document.getElementById('result');
+    
+    const numOptions = options.length;
+    const arcSize = (2 * Math.PI) / numOptions;
+    let currentRotation = 0;
+
+    // 繪製轉盤
+    function drawWheel() {
+        options.forEach((text, i) => {
+            const angle = i * arcSize;
+            
+            // 設定顏色相間
+            ctx.fillStyle = (i % 2 === 0) ? "#e6ccb2" : "#ede0d4";
+            
+            ctx.beginPath();
+            ctx.moveTo(250, 250);
+            ctx.arc(250, 250, 250, angle, angle + arcSize);
+            ctx.fill();
+            ctx.save();
+
+            // 繪製文字
+            ctx.translate(250, 250);
+            ctx.rotate(angle + arcSize / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#6c584c";
+            ctx.font = "bold 30px Microsoft JhengHei";
+            ctx.fillText(text, 230, 10);
+            ctx.restore();
+        });
+    }
+
+    function spinWheel() {
+        spinBtn.disabled = true;
+        resultDiv.innerText = "挑選中...";
+        
+        // 隨機增加旋轉圈數 (至少 5 圈)
+        const extraDegree = Math.floor(Math.random() * 360);
+        const totalDegree = currentRotation + (360 * 5) + extraDegree;
+        currentRotation = totalDegree;
+        
+        canvas.style.transform = `rotate(${totalDegree}deg)`;
+
+        // 等待動畫結束 (4秒)
+        setTimeout(() => {
+            spinBtn.disabled = false;
+            
+            // 計算結果
+            // 因為是順時針旋轉，所以要用 360 減去餘數，並考慮指針在正上方 (-90度)
+            const actualDegree = (totalDegree % 360);
+            const index = Math.floor(((360 - actualDegree + 270) % 360) / (360 / numOptions));
+            
+            const winner = options[index];
+            resultDiv.innerText = "🎉 今天就吃： " + winner + " 🎉";
+        }, 4000);
+    }
+
+    drawWheel();
+</script>
+
+</body>
+</html>
